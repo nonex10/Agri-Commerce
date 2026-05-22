@@ -1,13 +1,13 @@
 'use client';
 
-import { Product } from '@/types';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Star, ShoppingCart, Heart } from 'lucide-react';
+import { Product } from '@/types';
+import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
-import Image from 'next/image';
-import { useState } from 'react';
 
 interface ProductCardProps {
   product: Product;
@@ -20,18 +20,29 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const wishlisted = isWishlisted(product.id);
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem(product, 1);
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 2000);
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleItem(product);
+  };
+
   return (
     <div className="relative group bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 h-full flex flex-col">
-
+      
       {/* Wishlist Button */}
       <button
         type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleItem(product);
-        }}
+        onClick={handleWishlistToggle}
         className="absolute top-3 left-3 z-10 w-8 h-8 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center transition-all hover:bg-background hover:scale-110"
+        aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
       >
         <Heart
           className={`w-4 h-4 transition-colors ${
@@ -40,7 +51,7 @@ export function ProductCard({ product }: ProductCardProps) {
         />
       </button>
 
-      <Link href={`/products/${product.id}`} className="flex flex-col flex-grow">
+      <Link href={`/products/${product.id}`} className="flex flex-col grow">
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">
           <Image
@@ -56,7 +67,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Content */}
-        <div className="p-4 flex flex-col flex-grow">
+        <div className="p-4 flex flex-col grow">
           <h3 className="font-semibold text-card-foreground text-lg line-clamp-2 mb-2 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
@@ -65,7 +76,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.farmer}
           </p>
 
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-grow">
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3 grow">
             {product.description}
           </p>
 
@@ -91,21 +102,16 @@ export function ProductCard({ product }: ProductCardProps) {
           {/* Price + Cart */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-2xl font-bold text-primary">
-              ${product.price.toFixed(2)}
+              Rs. {product.price.toLocaleString('en-NP')}
             </span>
 
             <Button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                addItem(product, 1);
-                setIsAdded(true);
-                setTimeout(() => setIsAdded(false), 2000);
-              }}
+              onClick={handleAddToCart}
               size="icon"
               variant={isAdded ? 'default' : 'outline'}
-              className={isAdded ? 'bg-green-600' : ''}
+              className={isAdded ? 'bg-green-600 hover:bg-green-700' : ''}
+              aria-label="Add to cart"
             >
               <ShoppingCart className="w-4 h-4" />
             </Button>

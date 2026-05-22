@@ -11,11 +11,11 @@ export default function AboutPage() {
 
       <main className="flex-1">
         {/* Header */}
-        <section className="bg-gradient-to-br from-primary/10 to-accent/10 py-12">
+        <section className="bg-linear-to-br from-primary/10 to-accent/10 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl font-bold text-foreground">About AgriFresh</h1>
             <p className="text-muted-foreground mt-2">
-              Connecting communities with fresh, sustainable agriculture
+              Connecting communities across Nepal with fresh, sustainable agriculture
             </p>
           </div>
         </section>
@@ -27,9 +27,9 @@ export default function AboutPage() {
               Our Mission
             </h2>
             <p className="text-lg text-muted-foreground text-center mb-8 leading-relaxed">
-              To revolutionize the food supply chain by connecting farmers directly with
-              consumers, ensuring fresh, organic produce reaches your table while
-              supporting sustainable agricultural practices and fair farmer compensation.
+              To simplify how fresh produce reaches people in Nepal by connecting local farms
+              directly with customers — ensuring fresher food, fair prices, and support for
+              sustainable agriculture across the country.
             </p>
           </div>
         </section>
@@ -49,8 +49,8 @@ export default function AboutPage() {
                   Sustainability
                 </h3>
                 <p className="text-muted-foreground">
-                  We prioritize organic farming practices and environmental
-                  responsibility in everything we do.
+                  We support responsible farming practices and care about
+                  the environment in everything we do.
                 </p>
               </div>
 
@@ -62,8 +62,8 @@ export default function AboutPage() {
                   Community
                 </h3>
                 <p className="text-muted-foreground">
-                  We believe in supporting local communities and building
-                  relationships between farmers and customers.
+                  We believe in supporting local communities across Nepal and building
+                  meaningful connections between producers and customers.
                 </p>
               </div>
 
@@ -75,8 +75,8 @@ export default function AboutPage() {
                   Transparency
                 </h3>
                 <p className="text-muted-foreground">
-                  Know where your food comes from. We provide complete information
-                  about every farmer and product.
+                  Know where your food comes from. We provide clear information
+                  about every product on our platform.
                 </p>
               </div>
             </div>
@@ -89,21 +89,22 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold text-foreground mb-6">Our Story</h2>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                AgriFresh was founded by a group of agricultural enthusiasts and tech
-                entrepreneurs who recognized a critical gap in the food supply chain.
-                While supermarkets profit from middlemen, farmers struggle with fair
-                compensation, and consumers want fresher options.
+                AgriFresh was started by a team passionate about improving how food
+                reaches people in Nepal. We saw a clear gap — fresh produce often travels
+                through too many hands before it reaches customers, making it less fresh
+                and more expensive for everyone.
               </p>
               <p>
-                We started with a simple idea: eliminate the middlemen and connect
-                farmers directly with customers. By leveraging technology and logistics
-                innovation, we created a platform that benefits everyone.
+                We started with a simple idea: cut out the unnecessary steps and connect
+                farms directly with people who want fresh, quality produce. Using
+                technology and a reliable local delivery network, we built a platform
+                that works for both producers and customers across Nepal.
               </p>
               <p>
-                Today, AgriFresh partners with hundreds of farms across the country,
-                delivering fresh, organic produce to thousands of happy customers. We&apos;re
-                proud to be part of a growing movement toward sustainable food systems
-                and local agriculture.
+                Today, AgriFresh partners with farms from the Terai to the hills,
+                delivering fresh produce to customers in cities and towns across Nepal.
+                We are proud to support local agriculture and make healthy food more
+                accessible to Nepali households.
               </p>
             </div>
           </div>
@@ -114,18 +115,12 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold mb-4">Join the AgriFresh Movement</h2>
             <p className="text-lg opacity-90 mb-8">
-              Whether you&apos;re looking to eat fresher or grow your farm, AgriFresh is here
-              to help.
+              Whether you&apos;re looking to buy fresh produce or list your farm&apos;s products, AgriFresh is here to help.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link href="/products">
                 <Button size="lg" variant="secondary" className="px-8">
                   Shop Fresh Produce
-                </Button>
-              </Link>
-              <Link href="/farmers">
-                <Button size="lg" variant="secondary" className="px-8">
-                  For Farmers
                 </Button>
               </Link>
             </div>

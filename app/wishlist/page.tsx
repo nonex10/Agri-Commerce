@@ -29,7 +29,7 @@ export default function WishlistPage() {
 
       <main className="flex-1">
         {/* Header */}
-        <section className="bg-gradient-to-br from-primary/10 to-accent/10 py-12">
+        <section className="bg-linear-to-br from-primary/10 to-accent/10 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 mb-2">
               <Heart className="w-8 h-8 text-primary fill-primary" />
@@ -92,7 +92,7 @@ export default function WishlistPage() {
                       </Link>
 
                       {/* Content */}
-                      <div className="p-4 flex flex-col flex-grow">
+                      <div className="p-4 flex flex-col grow">
                         <Link href={`/products/${product.id}`}>
                           <h3 className="font-semibold text-card-foreground hover:text-primary transition-colors line-clamp-1 mb-1">
                             {product.name}
@@ -116,7 +116,7 @@ export default function WishlistPage() {
                         </div>
 
                         <div className="flex items-center justify-between mt-auto gap-2">
-                          <span className="text-xl font-bold text-primary">${product.price.toFixed(2)}</span>
+                          <span className="text-xl font-bold text-primary">Rs. {product.price.toLocaleString('en-NP')}</span>
                           <div className="flex gap-1">
                             <Button
                               size="icon"

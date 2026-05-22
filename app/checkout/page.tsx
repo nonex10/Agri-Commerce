@@ -5,43 +5,41 @@ import { Footer } from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/cart-context';
+import { ordersService } from '@/services';
 import Link from 'next/link';
 import { ArrowLeft, Check } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const VAT_RATE = 0.13;
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotal, clearCart } = useCart();
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: '',
-  });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
 
-  if (items.length === 0 && !orderPlaced) {
+  const [formData, setFormData] = useState({
+    firstName: '', lastName: '', email: '', phone: '',
+    street: '', city: '', province: '', postalCode: '', country: 'Nepal',
+  });
+  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  const [error, setError] = useState('');
+
+  const subtotal = getTotal();
+  const vat = Math.round(subtotal * VAT_RATE);
+  const total = subtotal + vat;
+
+  if (items.length === 0 && !placedOrderId) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-muted-foreground text-lg mb-6">
-              Your cart is empty
-            </p>
+            <p className="text-muted-foreground text-lg mb-6">Your cart is empty</p>
             <Link href="/products">
-              <Button className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Shopping
-              </Button>
+              <Button className="gap-2"><ArrowLeft className="w-4 h-4" />Back to Shopping</Button>
             </Link>
           </div>
         </main>
@@ -50,26 +48,45 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsProcessing(true);
 
-    // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const shippingAddress = {
+      street: formData.street,
+      city: formData.city,
+      state: formData.province,
+      zipCode: formData.postalCode,
+      country: formData.country,
+      phone: formData.phone,
+    };
+
+    const { data, error: apiError } = await ordersService.place({
+      items,
+      shippingAddress,
+      paymentMethod,
+      subtotal,
+      vat,
+      total,
+    });
+
+    if (data) {
+      clearCart();
+      setPlacedOrderId(data.id);
+    } else {
+      setError(apiError || 'Failed to place order. Please try again.');
+    }
 
     setIsProcessing(false);
-    setOrderPlaced(true);
   };
 
-  if (orderPlaced) {
+  if (placedOrderId) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
         <Navbar />
@@ -78,18 +95,15 @@ export default function CheckoutPage() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-green-600" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Order Placed!
-            </h1>
-            <p className="text-muted-foreground mb-6">
-              Thank you for your order. We&apos;ll deliver your fresh produce within 24-48 hours.
+            <h1 className="text-3xl font-bold text-foreground mb-2">Order Placed!</h1>
+            <p className="text-muted-foreground mb-2">
+              Thank you for your order. We&apos;ll deliver your fresh produce within 24–48 hours.
             </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              Order ID: {Math.random().toString(36).substring(7).toUpperCase()}
-            </p>
-            <Button onClick={() => router.push('/')} className="w-full">
-              Return to Home
-            </Button>
+            <p className="text-sm font-medium text-primary mb-6">Order ID: {placedOrderId}</p>
+            <div className="flex flex-col gap-3">
+              <Button onClick={() => router.push('/orders')} className="w-full">View My Orders</Button>
+              <Button variant="outline" onClick={() => router.push('/')} className="w-full">Return to Home</Button>
+            </div>
           </div>
         </main>
         <Footer />
@@ -100,123 +114,79 @@ export default function CheckoutPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Navbar />
-
       <main className="flex-1">
-        {/* Header */}
-        <section className="bg-gradient-to-br from-primary/10 to-accent/10 py-12">
+        <section className="bg-linear-to-br from-primary/10 to-accent/10 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl font-bold text-foreground">Checkout</h1>
           </div>
         </section>
 
-        {/* Checkout Content */}
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
               {/* Shipping Form */}
               <div className="lg:col-span-2">
                 <div className="bg-card rounded-lg p-8 shadow-sm">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">
-                    Shipping Address
-                  </h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">Shipping Address</h2>
+
+                  {error && (
+                    <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg mb-6 text-sm">
+                      {error}
+                    </div>
+                  )}
 
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        type="text"
-                        name="firstName"
-                        placeholder="First Name"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        required
-                      />
-                      <Input
-                        type="text"
-                        name="lastName"
-                        placeholder="Last Name"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        required
-                      />
+                      <Input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleInputChange} required />
+                      <Input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleInputChange} required />
+                    </div>
+                    <Input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleInputChange} required />
+                    <Input type="tel" name="phone" placeholder="Phone Number (e.g. 98XXXXXXXX)" value={formData.phone} onChange={handleInputChange} required />
+                    <Input type="text" name="street" placeholder="Street Address / Tole" value={formData.street} onChange={handleInputChange} required />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input type="text" name="city" placeholder="City / Municipality" value={formData.city} onChange={handleInputChange} required />
+                      <Input type="text" name="province" placeholder="Province" value={formData.province} onChange={handleInputChange} required />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input type="text" name="postalCode" placeholder="Postal Code" value={formData.postalCode} onChange={handleInputChange} required />
+                      <Input type="text" name="country" placeholder="Country" value={formData.country} onChange={handleInputChange} required />
                     </div>
 
-                    <Input
-                      type="email"
-                      name="email"
-                      placeholder="Email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-
-                    <Input
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone Number"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                    />
-
-                    <Input
-                      type="text"
-                      name="street"
-                      placeholder="Street Address"
-                      value={formData.street}
-                      onChange={handleInputChange}
-                      required
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        type="text"
-                        name="city"
-                        placeholder="City"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        required
-                      />
-                      <Input
-                        type="text"
-                        name="state"
-                        placeholder="State"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        type="text"
-                        name="zipCode"
-                        placeholder="Zip Code"
-                        value={formData.zipCode}
-                        onChange={handleInputChange}
-                        required
-                      />
-                      <Input
-                        type="text"
-                        name="country"
-                        placeholder="Country"
-                        value={formData.country}
-                        onChange={handleInputChange}
-                        required
-                      />
+                    {/* Payment Method */}
+                    <div className="pt-2">
+                      <h3 className="text-lg font-semibold text-foreground mb-3">Payment Method</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {['Cash on Delivery', 'eSewa', 'Khalti'].map((method) => (
+                          <label
+                            key={method}
+                            className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              paymentMethod === method
+                                ? 'border-primary bg-primary/5 text-primary font-medium'
+                                : 'border-border hover:bg-secondary'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="paymentMethod"
+                              value={method}
+                              checked={paymentMethod === method}
+                              onChange={(e) => setPaymentMethod(e.target.value)}
+                              className="accent-primary"
+                            />
+                            {method}
+                          </label>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="flex gap-4 pt-4">
                       <Link href="/cart" className="flex-1">
                         <Button variant="outline" className="w-full gap-2">
-                          <ArrowLeft className="w-4 h-4" />
-                          Back to Cart
+                          <ArrowLeft className="w-4 h-4" />Back to Cart
                         </Button>
                       </Link>
-                      <Button
-                        type="submit"
-                        disabled={isProcessing}
-                        className="flex-1"
-                      >
+                      <Button type="submit" disabled={isProcessing} className="flex-1">
                         {isProcessing ? 'Processing...' : 'Place Order'}
                       </Button>
                     </div>
@@ -226,66 +196,49 @@ export default function CheckoutPage() {
 
               {/* Order Summary */}
               <div className="lg:col-span-1">
-                <div className="bg-card rounded-lg p-6 shadow-sm sticky top-24 h-fit">
-                  <h2 className="text-xl font-bold text-foreground mb-6">
-                    Order Summary
-                  </h2>
-
-                  {/* Items */}
+                <div className="bg-card rounded-lg p-6 shadow-sm sticky top-24">
+                  <h2 className="text-xl font-bold text-foreground mb-6">Order Summary</h2>
                   <div className="space-y-4 mb-6 pb-6 border-b border-border max-h-64 overflow-y-auto">
                     {items.map((item) => (
                       <div key={item.id} className="flex gap-4">
-                        <div className="relative w-16 h-16 bg-muted rounded overflow-hidden flex-shrink-0">
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative w-16 h-16 bg-muted rounded overflow-hidden shrink-0">
+                          <Image src={item.image} alt={item.name} fill className="object-cover" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-foreground text-sm">
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Qty: {item.quantity}
-                          </p>
+                          <p className="font-semibold text-foreground text-sm">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                           <p className="text-sm font-bold text-primary">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            Rs. {(item.price * item.quantity).toLocaleString('en-NP')}
                           </p>
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Totals */}
                   <div className="space-y-3">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
-                      <span>${getTotal().toFixed(2)}</span>
+                      <span>Rs. {subtotal.toLocaleString('en-NP')}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Shipping</span>
-                      <span>Free</span>
+                      <span className="text-green-600">Free</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Tax</span>
-                      <span>${(getTotal() * 0.08).toFixed(2)}</span>
+                      <span>VAT (13%)</span>
+                      <span>Rs. {vat.toLocaleString('en-NP')}</span>
                     </div>
                     <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span className="text-primary">
-                        ${(getTotal() * 1.08).toFixed(2)}
-                      </span>
+                      <span className="text-primary">Rs. {total.toLocaleString('en-NP')}</span>
                     </div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </section>
       </main>
-
       <Footer />
     </div>
   );

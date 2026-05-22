@@ -10,6 +10,7 @@ import Image from 'next/image';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotal } = useCart();
+  const VAT_RATE = 0.13;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -17,7 +18,7 @@ export default function CartPage() {
 
       <main className="flex-1">
         {/* Header */}
-        <section className="bg-gradient-to-br from-primary/10 to-accent/10 py-12">
+        <section className="bg-linear-to-br from-primary/10 to-accent/10 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl font-bold text-foreground">Shopping Cart</h1>
             <p className="text-muted-foreground">
@@ -52,7 +53,7 @@ export default function CartPage() {
                         className="flex gap-4 p-6 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors"
                       >
                         {/* Image */}
-                        <div className="relative w-24 h-24 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
+                        <div className="relative w-24 h-24 bg-muted rounded-lg shrink-0 overflow-hidden">
                           <Image
                             src={item.image}
                             alt={item.name}
@@ -74,7 +75,7 @@ export default function CartPage() {
                             </p>
                           </div>
                           <p className="text-lg font-bold text-primary">
-                            ${item.price.toFixed(2)}
+                            Rs. {item.price.toLocaleString('en-NP')}
                           </p>
                         </div>
 
@@ -106,7 +107,7 @@ export default function CartPage() {
                           {/* Total and Delete */}
                           <div className="flex flex-col items-end gap-2">
                             <p className="text-lg font-bold text-foreground">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              Rs. {(item.price * item.quantity).toLocaleString('en-NP')}
                             </p>
                             <button
                               onClick={() => removeItem(item.id)}
@@ -131,20 +132,20 @@ export default function CartPage() {
                     <div className="space-y-4 mb-6">
                       <div className="flex justify-between text-muted-foreground">
                         <span>Subtotal</span>
-                        <span>${getTotal().toFixed(2)}</span>
+                        <span>Rs. {getTotal().toLocaleString('en-NP')}</span>
                       </div>
                       <div className="flex justify-between text-muted-foreground">
                         <span>Shipping</span>
                         <span>Free</span>
                       </div>
                       <div className="flex justify-between text-muted-foreground">
-                        <span>Tax</span>
-                        <span>${(getTotal() * 0.08).toFixed(2)}</span>
+                        <span>VAT (13%)</span>
+                        <span>Rs. {Math.round(getTotal() * VAT_RATE).toLocaleString('en-NP')}</span>
                       </div>
                       <div className="border-t border-border pt-4 flex justify-between font-bold text-lg">
                         <span>Total</span>
                         <span className="text-primary">
-                          ${(getTotal() * 1.08).toFixed(2)}
+                          Rs. {Math.round(getTotal() * (1 + VAT_RATE)).toLocaleString('en-NP')}
                         </span>
                       </div>
                     </div>
