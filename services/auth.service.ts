@@ -1,5 +1,5 @@
 import { apiClient, ApiResponse } from './api-client';
- 
+
 export interface AuthUser {
     id: string;
     name: string;
@@ -20,6 +20,7 @@ export interface AuthUser {
     
     export interface AuthResponse {
     user: AuthUser;
+    token: string;
     }
     
     export const authService = {

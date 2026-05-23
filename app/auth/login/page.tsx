@@ -7,12 +7,12 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/auth-context';
 import { authService } from '@/services';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   const { setUser } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -20,7 +20,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const redirectTo = searchParams.get('redirect') || '/';
+  const [redirectTo, setRedirectTo] = useState('/');
+  //const redirectTo = searchParams.get('redirect') || '/';
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setRedirectTo(params.get('redirect') || '/');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +41,14 @@ export default function LoginPage() {
     const { data, error: apiError } = await authService.login({ email, password });
 
     if (data?.user) {
-      // Backend has set the HTTP-only cookie.
-      // We store the user object in React state only.
+      // // Backend has set the HTTP-only cookie.
+      // // We store the user object in React state only.
+      // setUser(data.user);
+      // router.push(redirectTo);
+      // Store token so api-client can send it with requests
+      if (data.token) {
+        localStorage.setItem('auth-token', data.token);
+      }
       setUser(data.user);
       router.push(redirectTo);
     } else {

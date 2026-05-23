@@ -28,6 +28,7 @@ export type ApiResponse<T> = {
     try {
         const response = await fetch(url, {
         ...options,
+        credentials: 'include',  // ADDED THIS LINE
         headers: {
             ...defaultHeaders,
             ...options.headers,

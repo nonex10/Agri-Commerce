@@ -54,8 +54,13 @@ export default function SignupPage() {
     });
 
     if (data?.user) {
-      // Backend has set the HTTP-only cookie.
-      // We store the user object in React state only.
+      // // Backend has set the HTTP-only cookie.
+      // // We store the user object in React state only.
+      // setUser(data.user);
+      // router.push('/');
+      if (data.token) {
+        localStorage.setItem('auth-token', data.token);
+      }
       setUser(data.user);
       router.push('/');
     } else {
