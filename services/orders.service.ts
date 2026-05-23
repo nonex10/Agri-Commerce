@@ -1,5 +1,5 @@
 import { apiClient, ApiResponse } from './api-client';
-import { CartItem, Address } from '@/types';
+import { CartItem } from '@/types'; 
 
 export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -10,53 +10,56 @@ export interface Order {
     total: number;
     subtotal: number;
     vat: number;
-    shippingAddress: Address;
-    paymentMethod: string;
+    shippingAddress: string; 
+    paymentMethod: 'COD' | 'eSewa' | 'Khalti'; 
     status: OrderStatus;
     createdAt: string;
     updatedAt: string;
-    }
+}
 
-    export interface PlaceOrderPayload {
+export interface PlaceOrderPayload {
     items: CartItem[];
-    shippingAddress: Address;
-    paymentMethod: string;
+    shippingAddress: string; 
+    paymentMethod: 'COD' | 'eSewa' | 'Khalti'; 
     subtotal: number;
     vat: number;
     total: number;
-    }
+}
 
-    export interface OrdersResponse {
+export interface OrdersResponse {
     orders: Order[];
     total: number;
-    }
+}
 
-    export const ordersService = {
-    /**
-     * Place a new order.
-     */
+export const ordersService = {
     place: (payload: PlaceOrderPayload): Promise<ApiResponse<Order>> => {
         return apiClient.post<Order>('/orders', payload);
     },
 
-    /**
-     * Fetch all orders for the authenticated user.
-     */
     getAll: (): Promise<ApiResponse<OrdersResponse>> => {
         return apiClient.get<OrdersResponse>('/orders');
     },
 
-    /**
-     * Fetch a single order by ID.
-     */
     getById: (orderId: string): Promise<ApiResponse<Order>> => {
         return apiClient.get<Order>(`/orders/${orderId}`);
     },
 
-    /**
-     * Cancel an order by ID (only valid while status is 'pending' or 'confirmed').
-     */
     cancel: (orderId: string): Promise<ApiResponse<Order>> => {
         return apiClient.patch<Order>(`/orders/${orderId}/cancel`, {});
     },
+
+    /**
+     * Initiate Khalti Payment
+     */
+    initiateKhalti: (orderId: string): Promise<ApiResponse<{ payment_url: string }>> => {
+        return apiClient.post<{ payment_url: string }>(`/payments/khalti/initiate`, { orderId });
+    },
+
+    /**
+     * Initiate eSewa Payment
+     * Returns the signature and required form fields from the Django backend
+     */
+    initiateEsewa: (orderId: string): Promise<ApiResponse<any>> => {
+        return apiClient.post<any>(`/payments/esewa/initiate`, { orderId });
+    }
 };

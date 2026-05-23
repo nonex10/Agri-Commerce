@@ -19,10 +19,18 @@ export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCart();
 
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', email: '', phone: '',
-    street: '', city: '', province: '', postalCode: '', country: 'Nepal',
+    firstName: '', 
+    lastName: '', 
+    email: '', 
+    phone: '',
+    toleVillage: '', 
+    municipality: '', 
+    district: '', 
+    province: '', 
+    country: 'Nepal',
   });
-  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  
+  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'eSewa' | 'Khalti'>('COD');
   const [isProcessing, setIsProcessing] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -58,19 +66,20 @@ export default function CheckoutPage() {
     setError('');
     setIsProcessing(true);
 
+    // Adjusted properties explicitly to map perfectly to your service layer expectations without postal code
     const shippingAddress = {
-      street: formData.street,
-      city: formData.city,
+      street: formData.toleVillage,
+      city: formData.municipality,
       state: formData.province,
-      zipCode: formData.postalCode,
+      district: formData.district,
       country: formData.country,
       phone: formData.phone,
-    };
+    } as any; 
 
     const { data, error: apiError } = await ordersService.place({
       items,
-      shippingAddress,
-      paymentMethod,
+      shippingAddress, 
+      paymentMethod: paymentMethod as any,
       subtotal,
       vat,
       total,
@@ -78,12 +87,54 @@ export default function CheckoutPage() {
 
     if (data) {
       clearCart();
-      setPlacedOrderId(data.id);
+
+      if (paymentMethod === 'COD') {
+        setPlacedOrderId(data.id);
+        setIsProcessing(false);
+      } 
+      
+      else if (paymentMethod === 'eSewa') {
+        try {
+          const { data: esewaParams } = await ordersService.initiateEsewa(data.id);
+          if (!esewaParams) throw new Error("Failed to receive valid eSewa parameters.");
+
+          const form = document.createElement("form");
+          form.setAttribute("method", "POST");
+          form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
+
+          for (const key in esewaParams) {
+            const hiddenField = document.createElement("input");
+            hiddenField.setAttribute("type", "hidden");
+            hiddenField.setAttribute("name", key);
+            hiddenField.setAttribute("value", esewaParams[key]);
+            form.appendChild(hiddenField);
+          }
+
+          document.body.appendChild(form);
+          form.submit();
+        } catch (err: any) {
+          setError(err.message || "eSewa initialization failed.");
+          setIsProcessing(false);
+        }
+      } 
+      
+      else if (paymentMethod === 'Khalti') {
+        try {
+          const { data: khaltiData } = await ordersService.initiateKhalti(data.id);
+          if (!khaltiData || !khaltiData.payment_url) {
+            throw new Error("Failed to retrieve a valid transaction URL from Khalti.");
+          }
+          
+          window.location.href = khaltiData.payment_url;
+        } catch (err: any) {
+          setError(err.message || "Khalti initialization failed.");
+          setIsProcessing(false);
+        }
+      }
     } else {
       setError(apiError || 'Failed to place order. Please try again.');
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
   };
 
   if (placedOrderId) {
@@ -125,7 +176,7 @@ export default function CheckoutPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-              {/* Shipping Form */}
+              {/* Shipping Address Input Section */}
               <div className="lg:col-span-2">
                 <div className="bg-card rounded-lg p-8 shadow-sm">
                   <h2 className="text-2xl font-bold text-foreground mb-6">Shipping Address</h2>
@@ -141,27 +192,30 @@ export default function CheckoutPage() {
                       <Input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleInputChange} required />
                       <Input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleInputChange} required />
                     </div>
-                    <Input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleInputChange} required />
-                    <Input type="tel" name="phone" placeholder="Phone Number (e.g. 98XXXXXXXX)" value={formData.phone} onChange={handleInputChange} required />
-                    <Input type="text" name="street" placeholder="Street Address / Tole" value={formData.street} onChange={handleInputChange} required />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input type="text" name="city" placeholder="City / Municipality" value={formData.city} onChange={handleInputChange} required />
-                      <Input type="text" name="province" placeholder="Province" value={formData.province} onChange={handleInputChange} required />
+                      <Input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} required />
+                      <Input type="tel" name="phone" placeholder="Phone Number (e.g. 98XXXXXXXX)" value={formData.phone} onChange={handleInputChange} required />
                     </div>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input type="text" name="postalCode" placeholder="Postal Code" value={formData.postalCode} onChange={handleInputChange} required />
-                      <Input type="text" name="country" placeholder="Country" value={formData.country} onChange={handleInputChange} required />
+                      <Input type="text" name="toleVillage" placeholder="Tole / Village" value={formData.toleVillage} onChange={handleInputChange} required />
+                      <Input type="text" name="municipality" placeholder="Municipality / Rural Municipality" value={formData.municipality} onChange={handleInputChange} required />
                     </div>
 
-                    {/* Payment Method */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input type="text" name="district" placeholder="District" value={formData.district} onChange={handleInputChange} required />
+                      <Input type="text" name="province" placeholder="Province" value={formData.province} onChange={handleInputChange} required />
+                    </div>
+
+                    {/* Payment Setup Layout */}
                     <div className="pt-2">
                       <h3 className="text-lg font-semibold text-foreground mb-3">Payment Method</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {['Cash on Delivery', 'eSewa', 'Khalti'].map((method) => (
+                        {[['COD', 'Cash on Delivery'], ['eSewa', 'eSewa'], ['Khalti', 'Khalti']].map(([value, label]) => (
                           <label
-                            key={method}
+                            key={value}
                             className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                              paymentMethod === method
+                              paymentMethod === value
                                 ? 'border-primary bg-primary/5 text-primary font-medium'
                                 : 'border-border hover:bg-secondary'
                             }`}
@@ -169,12 +223,12 @@ export default function CheckoutPage() {
                             <input
                               type="radio"
                               name="paymentMethod"
-                              value={method}
-                              checked={paymentMethod === method}
-                              onChange={(e) => setPaymentMethod(e.target.value)}
+                              value={value}
+                              checked={paymentMethod === value}
+                              onChange={(e) => setPaymentMethod(e.target.value as any)}
                               className="accent-primary"
                             />
-                            {method}
+                            {label}
                           </label>
                         ))}
                       </div>
@@ -194,7 +248,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Order Summary */}
+              {/* Order Sticky Summary Panel */}
               <div className="lg:col-span-1">
                 <div className="bg-card rounded-lg p-6 shadow-sm sticky top-24">
                   <h2 className="text-xl font-bold text-foreground mb-6">Order Summary</h2>
